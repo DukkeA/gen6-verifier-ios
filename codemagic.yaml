@@ -1,0 +1,41 @@
+workflows:
+  ios-workflow:
+    name: iOS Build
+    max_build_duration: 60
+    environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.gen6verifier.app
+      vars:
+        XCODE_WORKSPACE: "Gen6 Verifier.xcworkspace"
+        XCODE_SCHEME: "Gen6 Verifier"
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install CocoaPods dependencies
+        script: |
+          pod install
+      - name: Build iOS app
+        script: |
+          xcodebuild -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -archivePath $HOME/Library/Developer/Xcode/Archives/Gen6Verifier.xcarchive \
+            archive
+      - name: Export IPA
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath $HOME/Library/Developer/Xcode/Archives/Gen6Verifier.xcarchive \
+            -exportPath build \
+            -exportOptionsPlist exportOptions.plist
+    artifacts:
+      - build/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com
+        notify:
+          success: true
+          failure: true
